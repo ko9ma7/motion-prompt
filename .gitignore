@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# Logs / temporary
+*.log
+*.tmp
+*.bak
+
+# Node tooling (optional local validation)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local HTTP/test artifacts
+.playwright/
+test-results/
+coverage/

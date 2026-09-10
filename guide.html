@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GPT Image 2.5로 4×4 스프라이트 시트 만들기 — 프롬프트 설계부터 GIF 전 단계까지</title>
+  <meta name="description" content="최근 SNS에서 보이는 GPT Image 2.5 4×4 캐릭터 스프라이트 시트를 어떻게 만드는지, 프롬프트 구조와 실패 포인트, 실제 애니메이션용 검수 방법까지 정리했습니다.">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://ko9ma7.github.io/motion-prompt/guide.html">
+  <link rel="icon" href="./favicon.ico" sizes="any">
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <meta property="og:title" content="GPT Image 2.5로 4×4 스프라이트 시트 만들기">
+  <meta property="og:description" content="SNS에서 보이는 16프레임 캐릭터 모션 시트, 프롬프트만 따라 쓰지 말고 구조를 이해해 만드는 방법">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://ko9ma7.github.io/motion-prompt/guide.html">
+  <meta property="og:image" content="https://ko9ma7.github.io/motion-prompt/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ko9ma7.github.io/motion-prompt/assets/og-image.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Article","headline":"GPT Image 2.5로 4×4 스프라이트 시트 만들기","datePublished":"2026-09-11","author":{"@type":"Person","name":"블로그 작성자"},"about":["GPT Image 2.5","sprite sheet","pixel art","AI image generation"]}
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Motion Prompt Lab</span></a>
+      <nav class="header-nav" aria-label="주요 메뉴"><a href="./">프롬프트 빌더</a><a href="#prompt">실전 프롬프트</a></nav>
+    </div>
+  </header>
+  <main class="article-shell">
+    <a class="backlink" href="./">← 프롬프트 빌더로 돌아가기</a>
+    <h1>GPT Image 2.5로 4×4 스프라이트 시트 만들기</h1>
+    <p class="article-deck">요즘 SNS에서 캐릭터 한 장을 넣고 16개의 전투 동작, 걷기, 아이들 모션을 한 번에 뽑는 이미지가 자주 보입니다. 핵심은 ‘4×4라고 써주는 것’보다 캐릭터 일관성, 동작의 시간 순서, 기준점을 얼마나 정확히 고정하느냐에 있습니다.</p>
+    <div class="article-meta">2026.09.11 · GPT Image 2.5 · 픽셀아트 · 스프라이트 시트 · 프롬프트 설계</div>
+
+    <p>캐릭터를 게임 스프라이트처럼 4×4로 배치한 이미지 자체는 새롭지 않습니다. 달라진 부분은 <strong>참조 이미지의 특징을 유지한 채 여러 포즈를 한 번에 요청하는 작업이 전보다 훨씬 실용적인 수준으로 올라왔다는 점</strong>입니다. OpenAI는 2026년 9월 8일 ChatGPT Images 2.5를 발표하면서 참조 대상 보존, 여러 차례 편집에서의 일관성, 복잡한 레이아웃과 투명 배경 처리 개선을 주요 변화로 설명했습니다.</p>
+
+    <p>출시 직후 X와 Reddit에서는 한 캐릭터를 4×4, 총 16프레임의 전투 모션이나 아이들 애니메이션으로 만드는 사례가 빠르게 공유됐습니다. 다만 여기서 하나 구분해야 합니다. <strong>보기 좋은 스프라이트 시트를 만드는 것과 실제 게임 엔진에서 자연스럽게 재생되는 애니메이션을 만드는 것은 다른 문제</strong>입니다. 커뮤니티 피드백에서도 팔·다리 좌우가 바뀌거나, 발 위치가 흔들리거나, 프레임 사이의 예비동작과 후속동작이 부족하다는 지적이 반복됩니다.</p>
+
+    <div class="callout">
+      <strong>이 글의 결론부터</strong>
+      <p>처음에는 4×4 한 장을 ‘완성본’으로 생각하지 말고, <strong>16개의 키프레임 후보를 한 번에 만드는 시각적 초안</strong>으로 생각하는 편이 좋습니다. 프롬프트에서 일관성 조건을 강하게 걸고, 생성 후에는 반드시 프레임 단위로 잘라 실제 재생 검수를 해야 합니다.</p>
+    </div>
+
+    <h2>왜 GPT Image 2.5에서 이 방식이 특히 잘 맞나</h2>
+    <p>스프라이트 시트 제작은 이미지 생성 모델이 어려워하던 조건을 한꺼번에 요구합니다. 같은 캐릭터를 유지해야 하고, 각 칸마다 포즈는 달라야 하며, 카메라와 크기는 고정되어야 하고, 경우에 따라 배경은 투명해야 합니다. OpenAI가 공개한 Images 2.5의 개선점은 이 작업과 직접 맞닿아 있습니다.</p>
+    <ul>
+      <li><strong>참조 이미지 보존:</strong> 헤어스타일, 복장, 얼굴이나 물체의 특징을 여러 변형에서도 유지하는 능력이 좋아졌습니다.</li>
+      <li><strong>복잡한 지시 이해:</strong> 4×4 배열, 프레임 순서, 투명 배경처럼 한 번에 여러 조건을 주는 작업에 유리합니다.</li>
+      <li><strong>멀티턴 편집:</strong> 첫 결과에서 일부 프레임만 수정하거나 배경·의상 드리프트를 다시 잡는 후속 작업이 전보다 안정적입니다.</li>
+      <li><strong>프롬프트 공유 기능:</strong> 결과와 함께 프롬프트를 공유하기 쉬워지면서 SNS에서 ‘이 프롬프트를 그대로 넣어보세요’ 형식의 사례가 확산되기 좋은 환경이 됐습니다.</li>
+    </ul>
+
+    <h2>4×4를 먼저 적기보다 ‘시간축’을 설계해야 합니다</h2>
+    <p>실패하는 프롬프트는 대개 “이 캐릭터가 싸우는 4×4 스프라이트를 만들어줘”에서 끝납니다. 그러면 모델은 16개의 서로 다른 포즈를 그럴듯하게 채울 수는 있어도, 그것이 한 동작으로 이어져야 한다는 시간적 구조를 약하게 이해할 수 있습니다.</p>
+    <p>전투라면 최소한 다음 흐름을 먼저 정하는 편이 좋습니다.</p>
+    <table>
+      <thead><tr><th>구간</th><th>역할</th><th>프레임 예시</th></tr></thead>
+      <tbody>
+        <tr><td>Ready</td><td>시작 자세와 중심 확인</td><td>1~2</td></tr>
+        <tr><td>Anticipation</td><td>공격 방향의 반대쪽으로 힘을 모음</td><td>3~5</td></tr>
+        <tr><td>Action</td><td>주 공격 가속과 실행</td><td>6~9</td></tr>
+        <tr><td>Impact</td><td>가장 읽히는 타격 순간</td><td>10</td></tr>
+        <tr><td>Follow-through</td><td>관성과 2차 움직임</td><td>11~13</td></tr>
+        <tr><td>Recovery</td><td>처음 자세로 복귀</td><td>14~16</td></tr>
+      </tbody>
+    </table>
+    <p>걷기는 접지(Contact) → 하강(Down) → 통과(Passing) → 상승(Up)의 반복이고, 점프는 압축 → 도약 → 상승 → 정점 → 하강 → 착지 → 회복으로 나눌 수 있습니다. 이미지 생성 모델에게도 이렇게 <strong>애니메이션 언어로 동작을 분해해서 주는 편</strong>이 결과를 검수하기 쉽습니다.</p>
+
+    <h2>프롬프트에서 가장 중요한 것은 ‘바뀌지 않아야 할 것’</h2>
+    <p>프레임마다 포즈는 바뀌어야 하지만, 다른 요소는 오히려 최대한 고정해야 합니다. 특히 아래 네 가지가 흔들리면 GIF로 조립했을 때 바로 티가 납니다.</p>
+    <ol>
+      <li><strong>정체성:</strong> 머리 모양, 의상, 색, 무기, 소품, 얼굴/오브젝트 형태.</li>
+      <li><strong>스케일:</strong> 프레임마다 키나 몸집이 커졌다 작아지지 않도록 고정.</li>
+      <li><strong>카메라:</strong> 시점, 화각, 줌, 회전이 프레임마다 바뀌지 않도록 고정.</li>
+      <li><strong>등록점(registration):</strong> 캐릭터라면 발바닥, 오브젝트라면 중심축처럼 정렬의 기준이 되는 점.</li>
+    </ol>
+    <p>특히 등록점이 중요합니다. 각 프레임의 캐릭터를 단순히 보이는 픽셀 기준으로 자동 중앙 정렬하면, 점프가 화면 속에서 제자리 움직임으로 변하거나 걷는 캐릭터가 좌우로 미끄러져 보일 수 있습니다. 셀 크기와 기준 좌표를 고정한 상태에서 몸이 그 안에서 움직여야 합니다.</p>
+
+    <h2 id="prompt">그대로 복사해서 쓸 수 있는 4×4 전투 스프라이트 프롬프트</h2>
+    <p>아래는 SNS의 특정 프롬프트를 복사한 것이 아니라, 실제 스프라이트 작업에서 필요한 조건을 기준으로 다시 설계한 템플릿입니다. 캐릭터 설명과 동작만 바꿔서 사용하면 됩니다.</p>
+    <pre>GOAL
+Create a 4×4 sprite sheet containing exactly 16 sequential frames of one coherent combat animation, using the uploaded character image as the identity reference.
+
+SUBJECT FIDELITY
+- Preserve the character's hairstyle, face, outfit, colors, footwear, accessories, body proportions, and left/right-specific details across every frame.
+- Keep the character at a consistent scale.
+- If the character has no clearly visible weapon or ability, do not invent unrelated powers; use a plausible physical action.
+
+MOTION DESIGN
+Build one continuous sequence:
+Ready stance → anticipation → acceleration → main attack → impact peak → follow-through → recovery → return to the opening stance.
+Animate real changes in joints, balance, and body mechanics. Do not simulate motion by merely shifting or rotating a static drawing.
+
+STYLE
+Crisp 16-bit game-style pixel art, clear silhouette, restrained palette, consistent logical pixel size, sharp nearest-neighbor-like edges.
+
+CAMERA & REGISTRATION
+- Fixed side or three-quarter camera.
+- Same zoom, scale, and viewing angle in all frames.
+- Keep a stable ground baseline and a consistent foot-contact registration point.
+
+SPRITE SHEET
+- Exactly 4 columns × 4 rows.
+- Read left to right, then top to bottom.
+- Equal cell dimensions and padding.
+- One character per cell.
+- Full body, props, and effects must remain inside the cell.
+- No grid lines, frame numbers, text, watermarks, or UI.
+
+BACKGROUND
+Use genuine RGBA transparency. Do not render a checkerboard pattern to imitate transparency.
+
+LOOP
+Make frame 16 transition naturally back into frame 1.
+
+QUALITY CHECK
+Before presenting the result, verify all 16 frames, character consistency, left/right limb consistency, scale, ground registration, transparent background, cell-boundary safety, and loop continuity. Correct obvious defects first.</pre>
+
+    <h3>캐릭터에 무기가 없을 때</h3>
+    <p>프롬프트에 “외형에서 확인되지 않는 능력을 새로 만들지 말 것”을 넣는 편이 좋습니다. 그렇지 않으면 모델이 전투 장면을 더 화려하게 만들기 위해 갑자기 검이나 마법 이펙트를 추가할 수 있습니다. 업로드한 예시처럼 평상복 캐릭터라면 잽, 킥, 회피, 낮은 자세 같은 물리 동작만 설계하도록 제한하는 식입니다.</p>
+
+    <h3>아이들 모션은 오히려 더 단순하게</h3>
+    <p>아이들 애니메이션은 호흡, 머리카락/옷의 2차 움직임, 한 번의 눈깜박임 정도면 충분합니다. 16프레임에 너무 많은 행동을 넣으면 ‘가만히 서 있는 상태’가 아니라 짧은 제스처 영상처럼 보이기 쉽습니다.</p>
+
+    <h2>생성한 뒤 바로 GIF로 만들면 안 되는 이유</h2>
+    <p>4×4 시트가 그럴듯하게 보이는 순간 바로 프레임을 자르고 GIF로 만들고 싶어집니다. 하지만 먼저 확대해서 확인해야 합니다. 커뮤니티 사례에서 반복적으로 언급되는 문제는 다음과 같습니다.</p>
+    <ul>
+      <li>오른팔과 왼팔이 프레임 중간에 서로 바뀜.</li>
+      <li>부츠, 소매, 머리카락 길이처럼 작은 특징이 한두 칸에서 달라짐.</li>
+      <li>발이 바닥에서 고정되지 않고 매 프레임 몇 픽셀씩 미끄러짐.</li>
+      <li>공격 직전의 예비동작이 부족해 타격이 갑자기 튀어나옴.</li>
+      <li>모델이 만든 ‘픽셀풍’ 이미지가 실제 논리 픽셀 그리드와 일치하지 않아 프레임마다 픽셀 크기가 섞임.</li>
+      <li>체커보드가 실제 투명이 아니라 그림으로 들어가 있음.</li>
+    </ul>
+    <p>따라서 첫 결과는 ‘완성된 애니메이션’보다 <strong>후보 키프레임 묶음</strong>에 가깝다고 보는 게 안전합니다. 실제 게임 리소스로 쓸 경우에는 프레임별 보정, 팔레트 정리, 기준점 조정, 타이밍 편집을 거치는 편이 좋습니다.</p>
+
+    <h2>프레임을 자를 때는 보이는 캐릭터가 아니라 셀을 기준으로</h2>
+    <p>1024×1024 이미지에 4×4가 정확히 배치됐다면 한 셀은 256×256입니다. 이때 각 캐릭터의 보이는 영역을 찾아서 자동으로 잘라내는 방식보다, 처음부터 고정 셀을 유지하는 편이 애니메이션에 유리합니다.</p>
+    <pre>cellWidth  = imageWidth / 4
+cellHeight = imageHeight / 4
+x = column * cellWidth
+y = row * cellHeight</pre>
+    <p>점프처럼 상하 이동이 필요한 동작은 특히 그렇습니다. 캐릭터를 프레임마다 자동 중앙정렬해버리면 실제로는 위로 뛰어야 하는 움직임이 화면에서 사라집니다.</p>
+
+    <h2>전투 말고도 같은 구조를 여러 곳에 쓸 수 있습니다</h2>
+    <p>이번 유행에서 더 흥미로운 부분은 ‘전투 스프라이트’ 자체보다 <strong>한 대상을 고정하고 시간에 따른 변화를 격자로 설명하는 프롬프트 패턴</strong>입니다. 같은 구조는 아래처럼 확장할 수 있습니다.</p>
+    <table>
+      <thead><tr><th>대상</th><th>동작</th><th>활용</th></tr></thead>
+      <tbody>
+        <tr><td>캐릭터</td><td>걷기·달리기·점프·회피</td><td>게임 프로토타입</td></tr>
+        <tr><td>이모티콘 캐릭터</td><td>웃음·놀람·하트·인사</td><td>GIF/스티커 초안</td></tr>
+        <tr><td>제품</td><td>8방향 회전·개폐</td><td>제품 콘셉트/뷰어</td></tr>
+        <tr><td>로봇·기계</td><td>변형·전개·수납</td><td>기구 동작 설명</td></tr>
+        <tr><td>동물·크리처</td><td>보행·비행·공격</td><td>게임/애니메이션 리깅 참고</td></tr>
+        <tr><td>장면</td><td>행동 전개 8컷</td><td>스토리보드·광고 콘티</td></tr>
+      </tbody>
+    </table>
+
+    <h2>그래서 선택식 프롬프트 빌더도 같이 만들었습니다</h2>
+    <p>매번 긴 프롬프트를 손으로 고치기보다 대상, 동작, 배경, 시점, 프레임 수를 선택하면 필요한 일관성 조건과 프레임 플랜을 자동으로 조립하는 정적 웹도구를 함께 만들었습니다. 서버나 API 키가 필요 없고, GitHub Pages에 그대로 올릴 수 있습니다.</p>
+    <div class="cta-box">
+      <h3>Motion Prompt Lab</h3>
+      <p>전투·아이들·서기·앉기·눕기·수면·걷기·달리기·기어가기·점프·낙하·착지·비행·부유·수영·등반·감정표현·8방향 회전 등 다양한 프리셋을 지원합니다. UI 언어와 프롬프트 출력 언어는 독립적으로 선택할 수 있고, 한국어·영어·일본어·중국어·스페인어·프랑스어·독일어·포르투갈어·이탈리아어·러시아어·인도네시아어·터키어 12개 로케일을 지원하며 설정은 URL로 공유할 수 있습니다.</p>
+      <a class="btn secondary" href="./">프롬프트 빌더 열기</a>
+    </div>
+
+    <h2>마지막으로: 지금 단계에서 가장 현실적인 사용처</h2>
+    <p>GPT Image 2.5로 만든 스프라이트 시트는 인디 게임의 최종 리소스를 한 번에 끝내는 도구라기보다, <strong>프로토타입 속도를 크게 올려주는 제작 보조 도구</strong>로 보는 편이 적절합니다. 캐릭터가 어떤 동작을 할지 빠르게 탐색하고, 애니메이터나 개발자에게 전달할 포즈 후보를 만들고, 아이디어를 실제 화면에 넣어 보는 데 특히 유용합니다.</p>
+    <p>반대로 프레임 단위의 해부학 정확성, 엄격한 픽셀 그리드, 전투 판정에 맞는 타이밍이 필요한 상용 게임 리소스라면 사람의 보정 단계가 여전히 중요합니다. 지금 SNS에서 보이는 결과를 그대로 ‘완전 자동 애니메이션’으로 받아들이기보다, 이미지 생성 모델이 <strong>연속 동작의 초안을 얼마나 빠르게 만들 수 있게 됐는가</strong>에 초점을 맞춰 보면 이 흐름이 더 잘 보입니다.</p>
+
+    <h2>참고 자료</h2>
+    <div class="source-list">
+      <p>OpenAI, “Introducing ChatGPT Images 2.5” (2026-09-08): https://openai.com/index/introducing-chatgpt-images-2-5/</p>
+      <p>Kiki (@Mayz1169), 4×4 pixel-art combat sprite sheet prompt share: https://x.com/mayz1169/status/2097539942985728162</p>
+      <p>Reddit r/aigamedev, “GPT Image 2.5 nailed a 16 frame combat sprite sheet” (2026-09-09).</p>
+      <p>MagicCreator, awesome-gpt-image-2-5-prompts — sprite-sheet workflow examples.</p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ko-KR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Motion Prompt Lab — 다국어 모션 프롬프트 빌더</title>
+  <meta name="description" content="서기·눕기·비행·수영·등반·균형·전환·상호작용 등 다양한 상황과 동작을 선택하고, 12개 국가/지역 언어로 이미지 생성용 모션 프롬프트를 만드는 브라우저 도구입니다.">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://ko9ma7.github.io/motion-prompt/">
+  <link rel="icon" href="./favicon.ico" sizes="any">
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="./assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="manifest" href="./site.webmanifest">
+  <meta property="og:title" content="Motion Prompt Lab — Multilingual Motion Prompt Builder">
+  <meta property="og:description" content="Standing, lying, flying, balancing, climbing, interacting and more. Choose UI and prompt languages independently across 12 locales.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ko9ma7.github.io/motion-prompt/">
+  <meta property="og:image" content="https://ko9ma7.github.io/motion-prompt/assets/og-image.png">
+  <meta property="og:site_name" content="Motion Prompt Lab">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Motion Prompt Lab">
+  <meta name="twitter:description" content="Multilingual sprite-sheet and motion prompt builder with independent UI and prompt languages">
+  <meta name="twitter:image" content="https://ko9ma7.github.io/motion-prompt/assets/og-image.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebApplication",
+    "name":"Motion Prompt Lab",
+    "applicationCategory":"DesignApplication",
+    "operatingSystem":"Any",
+    "description":"Multilingual browser-based builder for sprite sheets, pose sequences and motion prompts."
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#builder" data-i18n="skip">프롬프트 빌더로 이동</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="./" aria-label="Motion Prompt Lab">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Motion Prompt Lab</span>
+      </a>
+      <nav class="header-nav" aria-label="Primary navigation">
+        <a href="#builder" data-i18n="navBuilder">빌더</a>
+        <a href="#how" data-i18n="navHow">사용법</a>
+        <a href="./guide.html" data-i18n="navGuide">블로그 가이드</a>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="테마 변경" title="테마 변경">◐</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <h1 data-i18n="heroTitle">움직임과 상황을 선택해
+프롬프트를 조립합니다.</h1>
+        <p data-i18n="heroDeck">서 있기·누워 있기·날기·수영·등반·전투·표정·오브젝트 상호작용까지. 제공 언어와 프롬프트 출력 언어를 서로 다르게 지정할 수 있습니다.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#builder" data-i18n="heroMake">프롬프트 만들기</a>
+          <a class="btn secondary" href="./guide.html" data-i18n="heroGuide">제작 원리 읽기</a>
+        </div>
+      </div>
+      <div class="hero-sequence" aria-label="Motion sequence example">
+        <div class="mini-grid" id="heroGrid" aria-hidden="true"></div>
+        <p>Stand → Move → Airborne → Contact → Recovery</p>
+      </div>
+    </section>
+
+    <section id="builder" class="builder-section wrap" aria-labelledby="builder-title">
+      <div class="section-heading">
+        <h2 id="builder-title" data-i18n="builderTitle">Motion Prompt Builder</h2>
+        <p data-i18n="builderDeck">UI 언어와 프롬프트 언어를 독립적으로 선택하세요. 12개 국가/지역 언어를 지원하며 API 키 없이 브라우저에서만 동작합니다.</p>
+      </div>
+
+      <div class="builder-layout">
+        <form id="promptForm" class="control-panel" autocomplete="off">
+          <div class="control-group language-group">
+            <h3 data-i18n="languageTitle">0. 언어</h3>
+            <div class="two-col">
+              <label><span data-i18n="uiLanguage">제공 언어</span>
+                <select id="uiLanguage"></select>
+              </label>
+              <label><span data-i18n="promptLanguage">프롬프트 출력 언어</span>
+                <select id="promptLanguage"></select>
+              </label>
+            </div>
+            <p class="control-help" data-i18n="languageHelp">UI 언어와 프롬프트 언어는 서로 다르게 설정할 수 있습니다.</p>
+          </div>
+
+          <div class="control-group">
+            <h3 data-i18n="outputTitle">1. 출력 형태</h3>
+            <label><span data-i18n="preset">프리셋</span>
+              <select id="preset"></select>
+            </label>
+            <label><span data-i18n="model">모델/환경</span>
+              <select id="modelTarget">
+                <option>ChatGPT Images 2.5</option>
+                <option>GPT-Image-2.5 Flare</option>
+                <option>GPT-Image-2.5 Sunburst</option>
+                <option>Generic image generation model</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <h3 data-i18n="subjectTitle">2. 대상·상황·동작</h3>
+            <label><span data-i18n="subjectType">대상 유형</span>
+              <select id="subjectType"></select>
+            </label>
+            <label><span data-i18n="subjectDesc">대상 설명</span>
+              <textarea id="subject" rows="3" data-i18n-placeholder="subjectPH" placeholder="예: 검은 단발머리, 베이지 원피스와 갈색 부츠를 착용한 캐릭터"></textarea>
+            </label>
+            <div class="two-col">
+              <label><span data-i18n="situation">상황/자세</span>
+                <select id="situation"></select>
+              </label>
+              <label><span data-i18n="motionPath">이동 경로</span>
+                <select id="motionPath"></select>
+              </label>
+            </div>
+            <label><span data-i18n="situationDetail">상황 추가 설명</span>
+              <input id="situationDetail" type="text" data-i18n-placeholder="situationPH" placeholder="예: 낮은 소파에 옆으로 누워 한쪽 팔을 베개처럼 사용">
+            </label>
+            <div class="two-col">
+              <label><span data-i18n="action">동작</span>
+                <select id="action"></select>
+              </label>
+              <label><span data-i18n="motionMood">동작 성격</span>
+                <select id="motionMood"></select>
+              </label>
+            </div>
+            <label><span data-i18n="actionDetail">동작 추가 설명</span>
+              <textarea id="actionDetail" rows="2" data-i18n-placeholder="actionPH" placeholder="예: 천천히 몸을 일으킨 뒤 주변을 확인하고 다시 눕는다"></textarea>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <h3 data-i18n="visualTitle">3. 스타일·시점·환경</h3>
+            <div class="two-col">
+              <label><span data-i18n="style">스타일</span>
+                <select id="style"></select>
+              </label>
+              <label><span data-i18n="view">시점</span>
+                <select id="view"></select>
+              </label>
+            </div>
+            <div class="two-col">
+              <label><span data-i18n="background">환경/배경</span>
+                <select id="background"></select>
+              </label>
+              <label><span data-i18n="direction">방향</span>
+                <select id="direction"></select>
+              </label>
+            </div>
+            <label><span data-i18n="environmentDetail">환경 추가 설명</span>
+              <input id="environmentDetail" type="text" data-i18n-placeholder="envPH" placeholder="예: 비 내리는 네온 골목, 조명 방향과 그림자 일관성 유지">
+            </label>
+          </div>
+
+          <div class="control-group">
+            <h3 data-i18n="framesTitle">4. 프레임과 일관성</h3>
+            <div class="two-col">
+              <label><span data-i18n="frameCount">프레임 수</span>
+                <select id="frameCount">
+                  <option value="4">4</option>
+                  <option value="8">8</option>
+                  <option value="12">12</option>
+                  <option value="16">16</option>
+                  <option value="20">20</option>
+                  <option value="24">24</option>
+                </select>
+              </label>
+              <label><span data-i18n="grid">배열</span>
+                <select id="gridLayout">
+                  <option value="2x2">2 × 2</option>
+                  <option value="4x2">4 × 2</option>
+                  <option value="3x4">3 × 4</option>
+                  <option value="4x4">4 × 4</option>
+                  <option value="5x4">5 × 4</option>
+                  <option value="6x4">6 × 4</option>
+                  <option value="strip">Strip</option>
+                </select>
+              </label>
+            </div>
+            <fieldset class="checks">
+              <legend data-i18n="locks">고정 조건</legend>
+              <label><input type="checkbox" id="lockIdentity" checked> <span data-i18n="lockIdentity">캐릭터/대상 정체성 유지</span></label>
+              <label><input type="checkbox" id="lockScale" checked> <span data-i18n="lockScale">크기·비율 고정</span></label>
+              <label><input type="checkbox" id="lockBaseline" checked> <span data-i18n="lockBaseline">바닥 기준선/등록점 고정</span></label>
+              <label><input type="checkbox" id="lockCamera" checked> <span data-i18n="lockCamera">카메라 고정</span></label>
+              <label><input type="checkbox" id="seamlessLoop" checked> <span data-i18n="seamlessLoop">마지막→첫 프레임 자연스럽게 연결</span></label>
+            </fieldset>
+          </div>
+
+          <div class="control-group">
+            <h3 data-i18n="constraintsTitle">5. 출력 제약</h3>
+            <fieldset class="checks">
+              <legend data-i18n="quality">품질 조건</legend>
+              <label><input type="checkbox" id="noText" checked> <span data-i18n="noText">텍스트·번호·워터마크 없음</span></label>
+              <label><input type="checkbox" id="noCrop" checked> <span data-i18n="noCrop">몸·소품·이펙트 잘림 없음</span></label>
+              <label><input type="checkbox" id="noBleed" checked> <span data-i18n="noBleed">셀 경계 넘김 없음</span></label>
+              <label><input type="checkbox" id="trueAlpha" checked> <span data-i18n="trueAlpha">투명 배경일 때 진짜 알파 채널 요구</span></label>
+            </fieldset>
+            <label><span data-i18n="extra">추가 요구사항</span>
+              <textarea id="extra" rows="3" data-i18n-placeholder="extraPH" placeholder="예: 참조 이미지에 없는 무기나 마법은 새로 만들지 않는다"></textarea>
+            </label>
+          </div>
+        </form>
+
+        <aside class="output-panel" aria-live="polite">
+          <div class="output-topbar">
+            <div>
+              <span class="eyebrow" data-i18n="generated">Generated prompt</span>
+              <h3 id="outputTitle">4×4 Combat Sprite</h3>
+            </div>
+            <div class="output-actions">
+              <button class="btn small secondary" id="shareBtn" type="button" data-i18n="share">설정 링크</button>
+              <button class="btn small primary" id="copyBtn" type="button" data-i18n="copy">프롬프트 복사</button>
+            </div>
+          </div>
+          <pre id="promptOutput" tabindex="0"></pre>
+          <div class="frame-plan">
+            <div class="frame-plan-head">
+              <h4 data-i18n="framePlan">프레임 플랜</h4>
+              <span id="frameMeta">16 frames · 4×4</span>
+            </div>
+            <ol id="framePlan"></ol>
+          </div>
+          <div class="quality-note">
+            <strong data-i18n="checkTitle">생성 후 꼭 확인할 것</strong>
+            <p data-i18n="checkBody">관절과 좌우 특징, 프레임별 크기와 등록점, 배경 일관성, 동작의 연결성을 확인하세요. 좋은 한 장보다 실제 재생했을 때 읽히는 움직임이 중요합니다.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="how" class="how-section">
+      <div class="wrap">
+        <div class="section-heading compact">
+          <h2 data-i18n="howTitle">좋은 결과는 ‘무엇을 움직일지’와 ‘무엇을 고정할지’를 분리할 때 나옵니다.</h2>
+          <p data-i18n="howDeck">자세와 공간 상태를 먼저 정하고, 동작과 이동 경로를 결합하면 서기·눕기·비행 같은 장면도 안정적으로 설계할 수 있습니다.</p>
+        </div>
+        <div class="how-grid">
+          <article><span>01</span><h3 data-i18n="how1Title">상황 고정</h3><p data-i18n="how1Body">서 있음, 누움, 공중, 수중처럼 대상이 공간과 어떤 관계인지 먼저 지정합니다.</p></article>
+          <article><span>02</span><h3 data-i18n="how2Title">동작 분해</h3><p data-i18n="how2Body">준비, 시작, 가속, 피크, 후속, 회복처럼 시간축을 나눕니다.</p></article>
+          <article><span>03</span><h3 data-i18n="how3Title">경로 분리</h3><p data-i18n="how3Body">제자리, 전진, 상승, 원형 등 이동 궤도를 동작과 별도 조건으로 지정합니다.</p></article>
+          <article><span>04</span><h3 data-i18n="how4Title">언어 분리</h3><p data-i18n="how4Body">UI는 한국어로 사용하면서 프롬프트는 영어·일본어·스페인어 등으로 출력할 수 있습니다.</p></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p data-i18n="footer">Motion Prompt Lab · browser-only · 12 locale languages · no API key</p>
+      <p><a href="./guide.html" data-i18n="navGuide">블로그 가이드</a></p>
+    </div>
+  </footer>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
